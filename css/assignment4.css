@@ -1,0 +1,16 @@
+body
+{
+	background-image: url(../images/cedarcity.jpg); 
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	background-size: 100%;
+}
+
+#text
+{
+	font-size: 1.5em;
+	width:990px;
+	margin: auto;
+	background: rgba(255,255,255,0.7);
+	padding: 0px 10px 10px 10px;
+}
