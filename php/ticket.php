@@ -11,7 +11,7 @@
 		private $cost;
 		
 		/* constructor for a ticket object
-		 * input: (string) flightId (from flights class) *primarykey with userId*foreignkey also*
+		 * input: (int) flightId (from flights class) *primarykey with userId*foreignkey also*
 		 * input: (int) userId (from user class) *primarykey with flightId*foreignkey also*
 		 * input: (string) seat
 		 * input: (double) cost
@@ -62,13 +62,20 @@
 		
 //setters
 		/* setter method for flightId
-		 * input: (string) flightId (primarykey)
+		 * input: (int) flightId (primarykey)
 		 * output: N/A */
 		public function setFlightId($ticketFlightId)
-		{	// throw out leading and trailing spaces  (sanitization1)
+		{	// throw out leading and trailing spaces (sanitization1)
 			$ticketFlightId = trim($ticketFlightId);
-			// throw out bad IDs by testing against regular expression (sanitization2)
-			$regex = "/^[A-Z]{2}[1-9]{1,7}$/";
+			// test to ensure the input is numeric (sanitization2)
+			if(is_numeric($ticketUserId) === false)
+			{
+				throw(new Exception("Invalid user id detected: $ticketUserId is not numeric"));
+			}
+			// convert the ID to an integer (sanitization3)
+			$ticketUserId = intval($ticketUserId);
+			// throw out bad IDs by testing against regular expression (sanitization4)
+			$regex = "/^\d{1,5}$/";
 			if(preg_match($regexp, $ticketFlightId) !== 1)
 			{
 				throw(new Exception("Invalid flightId detected: $ticketFlightId , failed RegEx test."));
@@ -123,12 +130,13 @@
 			{
 				throw(new Exception("Invalid user id detected: $ticketCost is not numeric"));
 			}
-			// convert the ID to a double (sanitization3)
+			// make sure there are at least two trailing digits(sanitization3)
+			$ticketCost = number_format((float)$ticketCost, 2, '.', '');
+			// convert the ID to a double (sanitization4)
 			$ticketCost = floatval($ticketCost);
-			if($ticketCost === 
-			// Round trailing digits (sanitization4)
+			// Round trailing digits so there are ONLY two (sanitization5)
 			$ticketCost = round($ticketCost, 2);
-			// throw out bad prices by testing against regular expression (sanitization5)
+			// throw out bad prices by testing against regular expression (sanitization6)
 			$regex = "/^\d{1,5}\.\d{2}$/";
 			if(preg_match($regexp, $ticketCost) !== 1)
 			{
@@ -136,7 +144,6 @@
 			}
 			// sanitized, assign the value
 			$this->cost = $ticketCost;
-		
 		}
 
 // database manipulation functions		
@@ -151,21 +158,16 @@
 			{
 				throw(new Exception("Non mySQL pointer detected"));
 			}
-			// verify the id is -1 (i.e..., a new record)
-			if($this->id !== -1)
-			{
-				throw(new Exception("Non new id detected"));
-			}
 			// create a query template
-			$query = "INSERT INTO user(email, password, salt) VALUES(?, ?, ?)";
+			$query = "INSERT INTO ticket(flightId, userId, seat, cost) VALUES(?, ?, ?, ?)";
 			// prepare the query statement
 			$statement = $mysqli->prepare($query);
 			if($statement === false)
 			{
-				throw(new Exception("Unable to prepare statement. DOH!"));
+				throw(new Exception("Unable to prepare statement. $query"));
 			}
 			// bind parameters to the query template
-			$wasClean = $statement->bind_param("sss", $this->email, $this->password, $this->salt);
+			$wasClean = $statement->bind_param("iisd", $this->flightId, $this->userId, $this->seat, $this->cost);
 			if($wasClean === false)
 			{
 				throw(new Exception("Unable to bind parameters"));
@@ -174,46 +176,6 @@
 			if($statement->execute() === false)
 			{
 				throw(new Exception("Unable to execute statement"));
-			}
-			
-			// clean up the statement
-			$statement->close();
-			
-			$statement = null;
-			$query = "SELECT id FROM user WHERE email = ?";
-			$statement = $mysqli->prepare($query);
-			if($statement === false)
-			{
-				throw(new Exception("Unable to prepare statement"));
-			}
-			// bind parameters to the query template
-			$wasClean = $statement->bind_param("s", $this->email);
-			if($wasClean === false)
-			{
-				throw(new Exception("Unable to bind parameters"));
-			}
-			// okay now do it
-			if($statement->execute() === false)
-			{
-				throw(new Exception("Unable to execute statement"));
-			}
-			// get the result & make sure only 1 row is there
-			$result = $statement->get_result();
-			if($result === false || $result->num_rows !== 1)
-			{
-				throw(new Exception("Unable to determine user id: invalid result set"));				
-			}
-			// get the row and set the id, if you have a lot of rows, do this in a while
-			$row = $result->fetch_assoc();
-			$newId = $row["id"];
-			try
-			{
-				$this->setId($newId);
-			}
-			catch(Exception $exception)
-			{
-				// re-throw if the id is bad
-				throw(new Exception("Unable to determine user id", 0, $exception));
 			}
 			// clean up the statement
 			$statement->close();
@@ -226,21 +188,16 @@
 			{
 				throw(new Exception("Non mySQL pointer detected"));
 			}
-			// verify the id is not -1 (i.e..., a new record)
-			if($this->id === -1)
-			{
-				throw(new Exception("new id detected"));
-			}
 			// create a query template
-			$query = "DELETE FROM user WHERE id = ?";
+			$query = "DELETE FROM ticket WHERE userId  = ? AND flightId = ?";
 			// prepare the query statement
 			$statement = $mysqli->prepare($query);
 			if($statement === false)
 			{
-				throw(new Exception("Unable to prepare statement. DOH!"));
+				throw(new Exception("Unable to prepare statement."));
 			}
 			// bind parameters to the query template
-			$wasClean = $statement->bind_param("i", $this->id);
+			$wasClean = $statement->bind_param("ii", $this->userId, $this->flightId);
 			if($wasClean === false)
 			{
 				throw(new Exception("Unable to bind parameters"));
@@ -264,13 +221,20 @@
 			{
 				throw(new Exception("Non mySQL pointer detected"));
 			}
-			// verify the id is not -1 (i.e..., a new record)
-			if($this->id === -1)
+			// make sure we're working with a valid objects
+			if($this->userId < 0 || $this->flightId < 0)
 			{
-				throw(new Exception("new id detected"));
+				if($this->userId < 0)
+				{
+					throw(new Exception("invalid userId"));
+				}
+				else
+				{
+					throw(new Exception("invalid flightId"));
+				}
 			}
 			// create a query template
-			$query = "UPDATE user SET email = ?, password = ?, salt = ? WHERE id = ?";
+			$query = "UPDATE flight SET seat = ?, cost = ? WHERE userId = ? AND flightId";
 			// prepare the query statement
 			$statement = $mysqli->prepare($query);
 			if($statement === false)
@@ -278,7 +242,7 @@
 				throw(new Exception("Unable to prepare statement. DOH!"));
 			}
 			// bind parameters to the query template
-			$wasClean = $statement->bind_param("sssi", $this->email, $this->password, $this->salt, $this->id);
+			$wasClean = $statement->bind_param("sdii", $this->seat, $this->cost, $this->userId, $this->flightId);
 			if($wasClean === false)
 			{
 				throw(new Exception("Unable to bind parameters"));
