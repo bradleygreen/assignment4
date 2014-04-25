@@ -9,11 +9,11 @@
 		<div id="text">
 			<?php
 				require_once("test/unittest.php");
-				require_once("php/user.php");
+/*				require_once("php/user.php");
 				require_once("php/profile.php");
 				require_once("php/ticket.php");
 				require_once("php/flight.php");
-			?>
+*/			?>
 			<p></p>
 		</div>
 	</body>
