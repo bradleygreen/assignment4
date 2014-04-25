@@ -1,5 +1,5 @@
  <?php
-	class flight
+	class Flight
 	{
 	    //state flight variables 
 		private $id;
