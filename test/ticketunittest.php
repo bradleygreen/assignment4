@@ -2,21 +2,22 @@
 	// grab the unit test framework
 	require_once("/usr/lib/php5/simpletest/autorun.php");
 			
-	//grab the function(s) under scrutiny
+	//grab the classes used  by the function(s) under scrutiny
 	require_once("../php/user.php");
-	require_once("../php/flight.php")
-	require_once("../php/ticket.php")
+	require_once("../php/flight.php");
+	require_once("../php/ticket.php");
 	class ticketTest extends UnitTestCase
 	{
 		//variable to hold our mySQL instance
 		private $mysqli;
-		// variable to hold the mySQL user
+		// variable to hold the mySQL ticket
 		private $sqlTicket;
 		
-		private $testSeat = "46b";
-		private $testCost = "242.93";
+		private $testSeat = "46B";
+		private $testCost = 242.93;
 		private $testUserId = 1;
 		private $testFlightId = 3;
+		private $updateFlightId = 5;
 		
 		// use the estUp() to connect to mySQL
 		public function setUp()
@@ -31,12 +32,12 @@
 				echo "unable to connect to mySQL: " . $exception->getMessage();
 			}
 		}
-		// this user should end up in mySQL... well the first time we run it!
+		// this ticket should end up in mySQL... well the first time we run it!
 		public function testCreateValidTicket()
 		{
 			// create & insert the ticket
-			$user = new Ticket($this->testFlightId, $this->testUserId, $this->testSeat, $this->testCost);
-			$user->insert($this->mysqli);
+			$testCreateTicket = new Ticket($this->testFlightId, $this->testUserId, $this->testSeat, $this->testCost);
+			$testCreateTicket->insert($this->mysqli);
 			
 			// select the ticket from mySQL and assert it was inserted properly
 			$query = "SELECT flightId, userId, seat, cost FROM ticket WHERE userId = ? AND flightId = ?";
@@ -44,7 +45,7 @@
 			$this->assertNotEqual($statement, false);
 			
 			// bind parameters to the query template
-			$wasClean = $statement->bind_param("ii", $this->testFlightId, $this->testUserId);
+			$wasClean = $statement->bind_param("ii", $this->testUserId, $this->testFlightId);
 			$this->assertNotEqual($wasClean, false);
 			
 			// execute the statement
@@ -59,34 +60,38 @@
 			// examine the result & assert we got what we want
 			$row = $result->fetch_assoc();
 			$this->sqlTicket = new Ticket($row["flightId"], $row["userId"], $row["seat"], $row["cost"]);
-			$this->assertIdentical($this->sqlTicket->getFlightId(), $this->flightId);
-			$this->assertIdentical($this->sqlTicket->getUserId(), $this->userId);
-			$this->assertIdentical($this->sqlTicket->getSeat(), $this->seat);
-			$this->assertIdentical($this->sqlTicket->getCost(), $this->cost);
+			$this->assertIdentical($this->sqlTicket->getFlightId(), $this->testFlightId);
+			$this->assertIdentical($this->sqlTicket->getUserId(), $this->testUserId);
+			$this->assertIdentical($this->sqlTicket->getSeat(), $this->testSeat);
+			$this->assertIdentical($this->sqlTicket->getCost(), $this->testCost);
 			$this->assertTrue($this->sqlTicket->getUserId() > 0);
 			$this->assertTrue($this->sqlTicket->getFlightId() > 0);
 			$statement->close();
+			
+			//delete test object
+			//$this->sqlTicket->delete($this->mysqli);
+			//$this->mysqli->close();
 		}
 		
 		public function testUpdateValidTicket()
 		{
-			// create & insert the ticket
-			$ticket = new Ticket($this->flightId, $this->userId, $this->seat, $this->cost);
-			$ticket->insert($this->mysqli);
+			// create & insert a new ticket
+			$testUpdateTicket = new Ticket($this->updateFlightId, $this->testUserId, $this->testSeat, $this->testCost);
+			$testUpdateTicket->insert($this->mysqli);
 			
 			//change the ticket's cost
-			$newCost = "99.12";
-			$ticket->setCost($newCost);
-			$ticket->update($this->mysqli);
+			$newCost = 12.12;
+			$testUpdateTicket->setCost($newCost);
+			$testUpdateTicket->update($this->mysqli);
 			
 			// select the ticket from mySQL and assert it was inserted properly
-			$query = "SELECT flightId, userId, seat, cost FROM ticket WHERE flightId = ? AND userId = ?";
-// --resume from here Brad--
+			$query = "SELECT flightId, userId, seat, cost FROM ticket WHERE cost = ? AND flightId = ? AND userId = ?";
+
 			$statement = $this->mysqli->prepare($query);
 			$this->assertNotEqual($statement, false);
 			
 			// bind parameters to the query template
-			$wasClean = $statement->bind_param("s", $newEmail);
+			$wasClean = $statement->bind_param("dii", $newCost, $this->updateFlightId, $this->testUserId);
 			$this->assertNotEqual($wasClean, false);
 			
 			// execute the statement
@@ -100,20 +105,20 @@
 			
 			// examine the result & assert we got what we want
 			$row = $result->fetch_assoc();
-			$this->sqlUser = new User($row["id"], $row["email"], $row["password"], $row["salt"]);
+			$this->sqlTicket = new Ticket($row["flightId"], $row["userId"], $row["seat"], $row["cost"]);
 			
-			// verify the email was changed
-			$this->assertIdentical($this->sqlUser->getEmail(), $newEmail);
-			$this->assertIdentical($this->sqlUser->getPassword(), $this->password);
-			$this->assertIdentical($this->sqlUser->getSalt(), $this->salt);
-			$this->assertTrue($this->sqlUser->getId() > 0);
+			// verify the cost was changed
+			$this->assertIdentical($this->sqlTicket->getFlightId(), $this->updateFlightId);
+			$this->assertIdentical($this->sqlTicket->getUserId(), $this->testUserId);
+			$this->assertIdentical($this->sqlTicket->getSeat(), $this->testSeat);
+			$this->assertIdentical($this->sqlTicket->getCost(), $newCost);
 			$statement->close();
 		}
 		
 		// use the tearDown() to close mySQL
 		public function tearDown()
 		{
-			$this->sqlUser->delete($this->mysqli);
+			$this->sqlTicket->delete($this->mysqli);
 			$this->mysqli->close();
 		}
 	}

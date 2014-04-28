@@ -68,15 +68,15 @@
 		{	// throw out leading and trailing spaces (sanitization1)
 			$ticketFlightId = trim($ticketFlightId);
 			// test to ensure the input is numeric (sanitization2)
-			if(is_numeric($ticketUserId) === false)
+			if(is_numeric($ticketFlightId) === false)
 			{
-				throw(new Exception("Invalid user id detected: $ticketUserId is not numeric"));
+				throw(new Exception("Invalid user id detected: $ticketFlightId is not numeric"));
 			}
 			// convert the ID to an integer (sanitization3)
-			$ticketUserId = intval($ticketUserId);
+			$ticketFlightId = intval($ticketFlightId);
 			// throw out bad IDs by testing against regular expression (sanitization4)
 			$regex = "/^\d{1,5}$/";
-			if(preg_match($regexp, $ticketFlightId) !== 1)
+			if(preg_match($regex, $ticketFlightId) !== 1)
 			{
 				throw(new Exception("Invalid flightId detected: $ticketFlightId , failed RegEx test."));
 			}
@@ -112,7 +112,7 @@
 			$ticketSeat = trim($ticketSeat);
 			// throw out bad IDs by testing against regular expression (sanitization2)
 			$regex = "/^\d{1,2}[A-K]$/";
-			if(preg_match($regexp, $ticketSeat) !== 1)
+			if(preg_match($regex, $ticketSeat) !== 1)
 			{
 				throw(new Exception("Invalid seat detected: $ticketSeat , failed RegEx test."));
 			}
@@ -138,7 +138,7 @@
 			$ticketCost = round($ticketCost, 2);
 			// throw out bad prices by testing against regular expression (sanitization6)
 			$regex = "/^\d{1,5}\.\d{2}$/";
-			if(preg_match($regexp, $ticketCost) !== 1)
+			if(preg_match($regex, $ticketCost) !== 1)
 			{
 				throw(new Exception("Invalid cost detected: $ticketCost , failed RegEx test."));
 			}
@@ -234,7 +234,7 @@
 				}
 			}
 			// create a query template
-			$query = "UPDATE flight SET seat = ?, cost = ? WHERE userId = ? AND flightId";
+			$query = "UPDATE ticket SET seat = ?, cost = ? WHERE userId = ? AND flightId = ?";
 			// prepare the query statement
 			$statement = $mysqli->prepare($query);
 			if($statement === false)
@@ -257,3 +257,9 @@
 		}
 	}
 ?>
+
+
+
+
+
+
