@@ -25,7 +25,7 @@
 			try
 			{
 				$this->setId($newId);
-				$this->setFlighNumber($newFlightNumber);
+				$this->setFlightNumber($newFlightNumber);
 				$this->setOrigin($newOrigin);
 				$this->setDestination($newDestination);
 				$this->setNumberSeats($newNumberSeats);
@@ -36,7 +36,9 @@
 			{
 				//rethrow the exception to the caller, put the 0 in to get to $exception parameter
 				//we want to determine where the problems are onclick will catch it here 
-				//will rethrow to give as much info as possible 
+				//will rethrow to give as much info as possible
+				var_dump($this);
+				echo $exception->getTraceAsString() . "<br />";
 				echo "Cause: " . $exception->getMessage() . "<br />";
 				throw(new Exception("unable to build flight", 0, $exception));
 			}	
@@ -99,7 +101,7 @@
 			//  it will return true for any numbers coming in, strings w/numbers will return true
 			// then convert by using floatval for a double and inval for string to an integer 
 			//throws out obviously bad IDs
-			if(is_numeric($newId) == false)
+			if(is_numeric($newId) === false)
 			{
 				throw(new Exception("Invalid flight id detected: $newId"));
 			}
@@ -125,7 +127,13 @@
 	    * throws: invalid input detected */ 
 	    public function setFlightNumber ($newFlightNumber)
 		{
-			$regexp = "/^[A-Z]{2}[1-9]{1,7}$/";
+			$newFlightNumber = trim($newFlightNumber);
+			if(is_numeric($newFlightNumber) === false)
+			{
+				throw(new Exception("invalid flight number detected: $newFlightNumber is not a number!"));
+			}
+			$newFlightNumber = intval($newFlightNumber);
+			$regexp = "/^[\d]{1,8}$/";
 			if(preg_match($regexp, $newFlightNumber) !==1)
 			{
 				throw(new Exception("Invalid flight number detected: $newFlightNumber"));
@@ -153,6 +161,24 @@
 			$this->origin= $newOrigin;
 			
 		}
+	   /* mutator method for origin
+	    * input: origin CHAR(3) NOT NULL
+	    * input: (string) new origin
+	    * output: N/A
+	    * throws: invalid input detected */ 
+		public function setDestination($newDestination)
+		{
+			$regexp = "/^[A^[a-zA-Z]+(?:[\s-][a-zA-Z]+)*$/";
+			if(preg_match($regexp, $newDestination) !==1)
+			{
+				throw(new Exception("Invalid destination detected: $newDestination"));
+			}
+			
+			// sanitized; assign the value 
+			$this->destination= $newDestination;
+			
+		}
+		
 	   /* mutator method for new number of seats
 	    * input: (integer) new number of seats
 	    * output: N/A
@@ -173,8 +199,20 @@
 			
 			// sanitized; assign the value 
 			$this->numberSeats = $newNumberSeats;
-			
+						
 		}
+		public function setDepartureTime($newDepartureTime)
+		{
+                       
+		        //regex matches 00/00/0000, 00/00/00, or w/our slashes
+                        $regexp ="/^[\d]{4}-[\d]{2}-[\d]{2} [\d]{2}:[\d]{2}:[\d]{2}$/";
+				if(preg_match($regexp, $newDepartureTime) !==1)
+                                {
+					throw(new Exception("Invalid departure time detected: $newDepartureTime"));
+				}
+			 //sanitized; assign the value
+                        $this->departureTime = $newDepartureTime;
+                }
 		/* THIS IS THE INSERT METHOD
 		 * inserts a new object into mySQL
 		 * input: (pointer) mySQL connection, by reference 
@@ -202,13 +240,13 @@
 			
 			//create a query template 
 			//? ? ? are place holders 
-			$query = "INSERT INTO flight (flightNumber, origin, destination, numberSeats, departureTime) VALUES( ?, ?, ?, ?, ?)";
+			$query = "INSERT INTO flight (flightNo, origin, destination, noSeats, departureTime) VALUES( ?, ?, ?, ?, ?)";
 			
 			// prepare the query statement
 			// this gives us a statement object that we can manipulate and use 
 			// you could prepare the statement for 40 flights  
 			$statement = $mysqli->prepare($query);		 		
-			if($statement === false)
+			if($statement  ===  false)
 			{
 				throw(new Exception("Unable to prepare statement."));
 			}
@@ -222,6 +260,7 @@
 			{
 				throw(new Exception("Unable to bind parameters"));
 			}
+			
 			if($statement->execute() === false)
 			{
 				 
@@ -233,7 +272,10 @@
 			$statement->close();
 			
 			 
-			$query = "SELECT id FROM flight WHERE flightNumber = ?";
+			$statement = null;
+			 
+			
+			$query = "SELECT id FROM flight WHERE flightNo = ?";
 			$statement = $mysqli->prepare($query);
 			if($statement === false)
 			{
@@ -253,9 +295,10 @@
 			
 			 
 			$result = $statement->get_result();
+			
 			if($result === false || $result->num_rows !== 1)
 			{
-				 
+				
 				throw(new Exception("Unable to determine flight id: invalid result set"));
 			}
 			$row = $result->fetch_assoc();
@@ -269,8 +312,10 @@
 				//rethrow if the id is bad
 				throw(new Exception("Unable to determine flight id", 0, $exception));
 			}
+			
 			//clean up the statement 
 			$statement ->close();
+		
 		}	
 		 			
 		/* DELETE 	 
