@@ -3,8 +3,8 @@
 	require_once("/usr/lib/php5/simpletest/autorun.php");
 			
 	//grab the function(s) under scrutiny
-	require_once("../user.php");
-	require_once("../flight.php");
+	//require_once("../user.php");
+	require_once("../php/flight.php");
 	//require_once("../php/ticket.php");
         //require_once("../php/profile.php");
         class FlightTest extends UnitTestCase
@@ -16,6 +16,7 @@
             
                 //These variables are all null, and belong to the FlightTest class, which is "$this"
                 private $flightNumber = 124;
+		private $updateFlightNumber = 125;
 		private $origin = "ORD";
 		private $destination = "DFW";
 		private $numberSeats= 4;	
@@ -79,22 +80,75 @@
 			$this->assertIdentical($this->sqlFlight->getOrigin(), $this->origin);
 			$this->assertIdentical($this->sqlFlight->getDestination(), $this->destination);
 			$this->assertIdentical($this->sqlFlight->getNumberSeats(), $this->numberSeats);
-			$this->assertIdentical($this->sqlFlight->getDepartureTime(), $this->departureTime);
-			
-					
+			$this->assertIdentical($this->sqlFlight->getDepartureTime(), $this->departureTime);	
 			$statement->close();
-		     
 		}
 		
+		//create a new flight 
+		public function testUpdateValidFlight()
+		{
+			/* create & insert this new guy into mysqli
+			 * put updateFlightNumber as private data member of the class so we can use it to build this flight.
+			 * All other information is changed exclusive to this method*/
+			$testFlight = new Flight(-1, $this->updateFlightNumber , $this->origin, $this->destination, $this->numberSeats, $this->departureTime);
+			$testFlight->insert($this->mysqli);
+			//create new funny variables
+			$newOrigin = "PPP";
+			$testFlight->setOrigin($newOrigin);
+			//$testFlight->update($this->mysqli);
+			
+			$newDestination = "QQQ";
+			$testFlight->setDestination($newDestination);
+			//$testFlight->update($this->mysqli);
+			
+			$newNumberSeats = 5000;
+			$testFlight->setNumberSeats($newNumberSeats);
+			//$testFlight->update($this->mysqli);
+			
+			$newDepartureTime = "2099-12-28 15:30:15";
+			$testFlight->setDepartureTime($newDepartureTime);
+			$testFlight->update($this->mysqli);
+			
+			// select the flight from mySQL and assert it was inserted properly
+			$query = "SELECT id, flightNo, origin, destination, noSeats, departureTime FROM flight WHERE flightNo = ? AND origin = ? AND destination = ? AND noSeats = ? AND departureTime = ?";
+
+			$statement = $this->mysqli->prepare($query);
+			$this->assertNotEqual($statement, false);
+			
+			// bind parameters to the query template
+			$wasClean = $statement->bind_param("issis", $this->updateFlightNumber, $newOrigin, $newDestination, $newNumberSeats, $newDepartureTime);
+			$this->assertNotEqual($wasClean, false);
+			
+			// execute the statement
+			$executed = $statement->execute();
+			$this->assertNotEqual($executed, false);
+			
+			// get the result & verify we only had 1
+			$result = $statement->get_result();
+			$this->assertNotEqual($result, false);
+			$this->assertIdentical($result->num_rows, 1);
+			
+			// examine the result & assert;  this is what i am pulling out and will compare it to the above
+			$row = $result->fetch_assoc();
+			// create a new flight (without writing to database), so we can test it's information against new updated flight
+			$this->sqlFlight = new Flight($row["id"], $row["flightNo"], $row["origin"], $row["destination"], $row["noSeats"], $row["departureTime"]);
+			
+			// verify the flight number was changed
+			$this->assertIdentical($this->sqlFlight->getFlightNumber(), $this->updateFlightNumber);
+			$this->assertIdentical($this->sqlFlight->getOrigin(), $newOrigin);
+			$this->assertIdentical($this->sqlFlight->getDestination(), $newDestination);
+			$this->assertIdentical($this->sqlFlight->getNumberSeats(), $newNumberSeats);
+			$this->assertIdentical($this->sqlFlight->getDepartureTime(), $newDepartureTime);
+			$statement->close();
+		}
+		//teardown actually test the delete function
 		public function tearDown()
 		{
 			if($this->sqlFlight != null)
 			{
 				$this->sqlFlight->delete($this->mysqli);
-			}
-			$this->mysqli->close();
+			}	
+				$this->mysqli->close();
 		}
-            
-            
         }
         
