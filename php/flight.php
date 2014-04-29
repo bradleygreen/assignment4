@@ -24,6 +24,7 @@
 		
 			try
 			{
+				 var_dump($this);
 				$this->setId($newId);
 				$this->setFlightNumber($newFlightNumber);
 				$this->setOrigin($newOrigin);
@@ -37,7 +38,7 @@
 				//rethrow the exception to the caller, put the 0 in to get to $exception parameter
 				//we want to determine where the problems are onclick will catch it here 
 				//will rethrow to give as much info as possible
-				var_dump($this);
+				
 				echo $exception->getTraceAsString() . "<br />";
 				echo "Cause: " . $exception->getMessage() . "<br />";
 				throw(new Exception("unable to build flight", 0, $exception));
@@ -279,9 +280,10 @@
 			$statement = $mysqli->prepare($query);
 			if($statement === false)
 			{
-				throw(new Exception("Unable to prerpare statement"));
+				throw(new Exception("Unable to prepare statement"));
 			}
-			$wasClean = $statement->bind_param("i" , $this-> flightNumber);
+			$wasClean = $statement->bind_param("i" , $this->flightNumber);
+			
 			if($wasClean === false)
 			{
 				throw(new Exception("Unable to bind parameters"));
@@ -295,8 +297,12 @@
 			
 			 
 			$result = $statement->get_result();
+			if($result->num_rows > 1 || $result->num_rows < 1)
+			{
+				throw(new Exception("wrong number of rows in result."));
+			}
 			
-			if($result === false || $result->num_rows !== 1)
+			if($result === false)
 			{
 				
 				throw(new Exception("Unable to determine flight id: invalid result set"));
@@ -378,7 +384,7 @@
 			}		    
 			
 			//create a query template 
-			$query = "UPDATE flight SET flightNumber = ?, origin = ?, destination = ? numberSeats = ? departureTime = ? WHERE id = ?";
+			$query = "UPDATE flight SET flightNo = ?, origin = ?, destination = ?, noSeats = ?, departureTime = ? WHERE id = ?";
 			
 			// prepare the query statement
 			$statement = $mysqli->prepare($query);
@@ -386,8 +392,8 @@
 			{
 				throw(new Exception("Unable to prepare statement"));
 			}
-			//bind parameters 
-			$wasClean = $statement->bind_param("issis", $this->flightNumber, $this->origin, $this->destination, $this->numberSeats, $this->departureTime);
+			//bind parameters this->departure
+			$wasClean = $statement->bind_param("issisi", $this->flightNumber, $this->origin, $this->destination, $this->numberSeats, $this->departureTime, $this->id );
 			if($wasClean === false)
 			{
 				throw(new Exception("Unable to bind parameters"));
@@ -398,6 +404,46 @@
 			{	
 			 
 				throw(new Exception("Unable to execute statement"));
+			}
+			// clean up the statement
+			$statement->close();
+			$statement = null;
+						 
+
+			$query = "SELECT id FROM flight Where flightNo =?  origin = ? destination = ? noSeats = ? departureTime = ?";
+			$statement = $mysqli->prepare($query);
+			if($statement === false)
+			{
+				throw(new Exception("Unable to prepare statement"));
+			}
+			// bind parameters to the query template
+			$wasClean = $statement->bind_param("s", $this->flightNumber);
+			if($wasClean === false)
+			{
+				throw(new Exception("Unable to bind parameters"));
+			}
+			// okay now do it
+			if($statement->execute() === false)
+			{
+				throw(new Exception("Unable to execute statement"));
+			}
+			// get the result & make sure only 1 row is there
+			$result = $statement->get_result();
+			if($result === false || $result->num_rows !== 1)
+			{
+				throw(new Exception("Unable to determine flight id: invalid result set"));				
+			}
+			// get the row and set the id, if you have a lot of rows, do this in a while
+			$row = $result->fetch_assoc();
+			$newId = $row["id"];
+			try
+			{
+				$this->setId($newId);
+			}
+			catch(Exception $exception)
+			{
+				// re-throw if the id is bad
+				throw(new Exception("Unable to determine user id", 0, $exception));
 			}
 			// clean up the statement
 			$statement->close();
