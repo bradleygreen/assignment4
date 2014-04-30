@@ -4,17 +4,20 @@
 			
 	//grab the function(s) under scrutiny
 	require_once("../php/user.php");
+	require_once("../php/profile.php");
 	
-	class UserTest extends UnitTestCase
+	class ProfileTest extends UnitTestCase
 	{
 		//variable to hold our mySQL instance
 		private $mysqli;
-		// variable to hold the mySQL user
-		private $sqlUser;
-		
-		private $email = "brad.is@correct.com";
-		private $password = "8cef652a7d3130bb234778794a5d41a3f59264d7c3221f25c34b391e87ace0b034556c9bc9c415642f810f3c38ad2759a042c7f6a6f43c66f3a079d3f2bf9fd8";
-		private $salt = "136c67657614311f32238751044a0a3c0294f2a521e573afa8e496992d3786ba";
+		// variable to hold the mySQL profile
+		private $sqlProfile;
+		// variables to hold the user data for test
+		private $userId = 1;
+		private $firstName = "John";
+		private $lastName = "Galt";
+		private $birthday = "1970-01-01";
+		private $specialNeeds = 1;
 	
 		// use the estUp() to connect to mySQL
 		public function setUp()
@@ -29,86 +32,131 @@
 				echo "unable to connect to mySQL: " . $exception->getMessage();
 			}
 		}
-		// this user should end up in mySQL... well the first time we run it!
-		public function testCreateValidUser()
-		{
-			// create & insert the user
-			$user = new User(-1, $this->email, $this->password, $this->salt);
-			$user->insert($this->mysqli);
-			
-			// select the user from mySQL and assert it was inserted properly
-			$query = "SELECT id, email, password, salt FROM user WHERE email = ?";
+		// this profile should end up in mySQL... well the first time we run it!
+		public function testCreateValidProfile()
+		{	// create & insert the profile
+			$profile = new Profile(-1, $this->userId, $this->firstName, $this->lastName, $this->birthday, $this->specialNeeds);
+			$profile->insert($this->mysqli);
+			// select the profile from mySQL and assert it was inserted properly
+			$query = "SELECT id, userId, firstName, lastName, birthday, specialNeeds FROM profile WHERE id = ?";
 			$statement = $this->mysqli->prepare($query);
+			if($statement === false)
+			{
+				var_dump($this);
+				throw(new Exception("Unable to prepare statement"));
+			}
 			$this->assertNotEqual($statement, false);
-			
 			// bind parameters to the query template
-			$wasClean = $statement->bind_param("s", $this->email);
+			$profileId = $profile->getId();
+			$wasClean = $statement->bind_param("i", $profileId);
+			if($wasClean === false)
+			{
+				var_dump($this);
+				throw(new Exception("Unable to bind parameters"));
+			}
 			$this->assertNotEqual($wasClean, false);
-			
 			// execute the statement
 			$executed = $statement->execute();
+			if($executed === false)
+			{
+				var_dump($this);
+				throw(new Exception("Unable to execute statement"));
+			}
 			$this->assertNotEqual($executed, false);
-			
 			// get the result & verify we only had 1
 			$result = $statement->get_result();
+			if($result === false || $result->num_rows !== 1)
+			{	echo "Number of rows is " . $result->num_rows . "<br /><br />";
+				var_dump($this);
+				throw(new Exception("Unable to get result: invalid result set or wrong number of rows"));				
+			}
+			$this->assertNotEqual($result, false);
+			$this->assertIdentical($result->num_rows, 1);
+			// examine the result & assert we got what we want
+			$row = $result->fetch_assoc();
+			$this->sqlProfile = new Profile($row["id"], $row["userId"], $row["firstName"], $row["lastName"], $row["birthday"], $row["specialNeeds"]);
+			$this->assertIdentical($this->sqlProfile->getUserId(), $this->userId);
+			$this->assertIdentical($this->sqlProfile->getFirstName(), $this->firstName);
+			$this->assertIdentical($this->sqlProfile->getLastName(), $this->lastName);
+			$this->assertIdentical($this->sqlProfile->getBirthday(), $this->birthday);
+			$this->assertIdentical($this->sqlProfile->getSpecialNeeds(), $this->specialNeeds);
+			// tests to ensure the new ID created doesn't still have the -1 id indicating new
+			$this->assertTrue($this->sqlProfile->getId() > 0); 
+			$statement->close();
+		}
+		// test updating variables in the profile
+		public function testUpdateValidProfile()
+		{	// create & insert the profile USING 58 AS USERID
+			$profile = new Profile(-1, 58, $this->firstName, $this->lastName, $this->birthday, $this->specialNeeds);
+			$profile->insert($this->mysqli);
+			
+			// create new variables with data to update
+			$newUserId = 59;
+			$newFirstName = "firstnamechanged";
+			$newLastName = "lastnamechanged";
+			$newBirthday = "1980-03-03";
+			$newSpecialNeeds = 0;
+			//change the profile's information using setters
+			$profile->setUserId($newUserId);
+			$profile->setFirstName($newFirstName);
+			$profile->setLastName($newLastName);
+			$profile->setBirthday($newBirthday);
+			$profile->setSpecialNeeds($newSpecialNeeds);
+			//push updates to the server
+			$profile->update($this->mysqli);
+			// select the profile from mySQL and assert it was inserted properly
+			$query = "SELECT id, userId, firstName, lastName, birthday, specialNeeds FROM profile WHERE id = ?";
+			$statement = $this->mysqli->prepare($query);
+			if($statement === false)
+			{
+				var_dump($this);
+				throw(new Exception("Unable to prepare statement"));
+			}
+			$this->assertNotEqual($statement, false);
+			// bind parameters to the query template
+			$profileId = $profile->getId();
+			$wasClean = $statement->bind_param("i", $profileId);
+			if($wasClean === false)
+			{
+				var_dump($this);
+				throw(new Exception("Unable to bind parameters"));
+			}
+			$this->assertNotEqual($wasClean, false);
+			// execute the statement
+			$executed = $statement->execute();
+			if($executed === false)
+			{
+				var_dump($this);
+				throw(new Exception("Unable to execute statement"));
+			}
+			$this->assertNotEqual($executed, false);
+			// get the result & verify we only had 1
+			$result = $statement->get_result();
+			if($result === false || $result->num_rows !== 1)
+			{
+				throw(new Exception("Unable to get result: invalid result set or wrong number of rows"));				
+			}
 			$this->assertNotEqual($result, false);
 			$this->assertIdentical($result->num_rows, 1);
 			
 			// examine the result & assert we got what we want
 			$row = $result->fetch_assoc();
-			$this->sqlUser = new User($row["id"], $row["email"], $row["password"], $row["salt"]);
-			$this->assertIdentical($this->sqlUser->getEmail(), $this->email);
-			$this->assertIdentical($this->sqlUser->getPassword(), $this->password);
-			$this->assertIdentical($this->sqlUser->getSalt(), $this->salt);
-			$this->assertTrue($this->sqlUser->getId() > 0);
+			$this->sqlProfile = new Profile($row["id"], $row["userId"], $row["firstName"], $row["lastName"], $row["birthday"], $row["specialNeeds"]);
+		
+			// verify the info was changed
+			$this->assertIdentical($this->sqlProfile->getUserId(), $newUserId);
+			$this->assertIdentical($this->sqlProfile->getFirstName(), $newFirstName);
+			$this->assertIdentical($this->sqlProfile->getLastName(), $newLastName);
+			$this->assertIdentical($this->sqlProfile->getBirthday(), $newBirthday);
+			$this->assertIdentical($this->sqlProfile->getSpecialNeeds(), $newSpecialNeeds);
+			// tests to ensure the new ID created doesn't still have the -1 id indicating new
+			$this->assertTrue($this->sqlProfile->getId() > 0); 
 			$statement->close();
 		}
-		
-		public function testUpdateValidUser()
-		{
-			// create & insert the user
-			$user = new User(-1, $this->email, $this->password, $this->salt);
-			$user->insert($this->mysqli);
-			
-			//change the user's email
-			$newEmail = "eric@is.correct.com";
-			$user->setEmail($newEmail);
-			$user->update($this->mysqli);
-			
-			// select the user from mySQL and assert it was inserted properly
-			$query = "SELECT id, email, password, salt FROM user WHERE email = ?";
-			$statement = $this->mysqli->prepare($query);
-			$this->assertNotEqual($statement, false);
-			
-			// bind parameters to the query template
-			$wasClean = $statement->bind_param("s", $newEmail);
-			$this->assertNotEqual($wasClean, false);
-			
-			// execute the statement
-			$executed = $statement->execute();
-			$this->assertNotEqual($executed, false);
-			
-			// get the result & verify we only had 1
-			$result = $statement->get_result();
-			$this->assertNotEqual($result, false);
-			$this->assertIdentical($result->num_rows, 1);
-			
-			// examine the result & assert we got what we want
-			$row = $result->fetch_assoc();
-			$this->sqlUser = new User($row["id"], $row["email"], $row["password"], $row["salt"]);
-			
-			// verify the email was changed
-			$this->assertIdentical($this->sqlUser->getEmail(), $newEmail);
-			$this->assertIdentical($this->sqlUser->getPassword(), $this->password);
-			$this->assertIdentical($this->sqlUser->getSalt(), $this->salt);
-			$this->assertTrue($this->sqlUser->getId() > 0);
-			$statement->close();
-		}
-		
 		// use the tearDown() to close mySQL
 		public function tearDown()
 		{
-			$this->sqlUser->delete($this->mysqli);
+			$this->sqlProfile->delete($this->mysqli);
 			$this->mysqli->close();
 		}
 	}
