@@ -1,4 +1,4 @@
-  <html>
+<html>
 	<head>
 		<title>New Account</title>
 		<link rel="stylesheet" type="text/css" href="stylesheet.css"/>
@@ -34,8 +34,8 @@
 					</div>
 					 
 					<input type="submit" value="Create Account" class="btn" />
-				 
+				 ?>
 			</form>	
 		</div>
-	</body>
+	</body>                                                    
 </html>
