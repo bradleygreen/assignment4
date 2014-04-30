@@ -2,12 +2,12 @@
  <html>
 	<head>
 		<title>New Account</title>
-		<link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+		<link rel="stylesheet" type="text/css" href="../css/stylesheet.css"/>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 		<script src="http://malsup.github.com/jquery.form.js"></script>
 		<script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.12.0/jquery.validate.min.js"></script>
 		<script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.12.0/additional-methods.min.js"></script>
-		<script src="profilevalidation.js" type="text/javascript"></script>
+		<script src="../js/profilevalidation.js" type="text/javascript"></script>
 	</head>
 	<body>
 		<div class="page">

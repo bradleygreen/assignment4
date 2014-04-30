@@ -1,18 +1,17 @@
 <?php
     session_start();
-    require_once("user.php");
 ?>
 
 <!DOCTYPE html>
     <html>
         <head>
             <title>Air Train login</title>
-		<link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+		<link rel="stylesheet" type="text/css" href="../css/stylesheet.css"/>
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 		<script src="http://malsup.github.com/jquery.form.js"></script>
 		<script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.12.0/jquery.validate.min.js"></script>
 		<script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.12.0/additional-methods.min.js"></script>
-		<script src="formvalidation.js" type="text/javascript"></script>
+		<script src="../js/formvalidation.js" type="text/javascript"></script>
 	</head>
 	<body>
             <h1><center>Welcome to Air Train</center></h1>
