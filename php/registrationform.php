@@ -17,7 +17,7 @@
 	<body>
 		<div class="page">
 			<h1>Register with Air Train</h1>
-			<form method="post" id="signupForm">
+			<form method="post" id="signupForm" action="registrationproc.php">
 			      <fieldset>
 					<h2 class="Emailandpassword">Email and Password</h2>
 					<div class="fields">
@@ -36,26 +36,26 @@
 					</div>
 					<div class="fields">
 						<p class="row">
-							<label for="firstname">First Name:</label>
-							<input type="text" id="firstname" name="firstname" class="field-large" required="required"/>
+							<label for="firstName">First Name:</label>
+							<input type="text" id="firstName" name="firstName" class="field-large" required="required"/>
 						</p>
 						<p class="row">
-							<label for="lastname">Last Name:</label>
-				 			<input type="text" id="lastname" name="lastname" class="field-large" required="required"/>
+							<label for="lastName">Last Name:</label>
+				 			<input type="text" id="lastName" name="lastName" class="field-large" required="required"/>
 						</p>
 						<p class="row">
 							<label for="birthday">Birth day month year:</label>
-							<select id="birthday" name="birthday">
-								<option value="0">0</option>
-								<option value="1">1</option>
-								<option value="2">2</option>
-								<option value="3">3</option>
-								<option value="4">4</option>
-								<option value="5">5</option>
-								<option value="6">6</option>
-								<option value="7">7</option>
-								<option value="8">8</option>
-								<option value="9">9</option>
+							<select id="birthday" name="day">
+								<option selected disabled>Day</option>
+								<option value="01">1</option>
+								<option value="02">2</option>
+								<option value="03">3</option>
+								<option value="04">4</option>
+								<option value="05">5</option>
+								<option value="06">6</option>
+								<option value="07">7</option>
+								<option value="08">8</option>
+								<option value="09">9</option>
 								<option value="10">10</option>
 								<option value="11">11</option>
 								<option value="12">22</option>
@@ -80,23 +80,23 @@
 								<option value="31">31</option>
 								</ul>
 							</select>
-							<select id="birthmonth" name="birthmonth">
-								<option value="month">Month</option>
-								<option value="January">January</option>
-								<option value="February">February</option>
-								<option value="March">March</option>
-								<option value="April">April</option>
-								<option value="May">May</option>
-								<option value="June">June</option>
-								<option value="July">July</option>
-								<option value="August">August</option>
-								<option value="September">September</option>
-								<option value="October">October</option>
-								<option value="November">November</option>
-								<option value="December">December</option>
+							<select id="birthmonth" name="month">
+								<option selected disabled>Month</option>
+								<option value="01">January</option>
+								<option value="02">February</option>
+								<option value="03">March</option>
+								<option value="04">April</option>
+								<option value="05">May</option>
+								<option value="06">June</option>
+								<option value="07">July</option>
+								<option value="08">August</option>
+								<option value="09">September</option>
+								<option value="10">October</option>
+								<option value="11">November</option>
+								<option value="12">December</option>
 							</select>
-							<select id="birthyear" name="birthyear">
-								<option value="Year">0000</option>
+							<select id="birthyear" name="year">
+								<option value="Year" selected disabled>Year</option>
 								<option value="2007">2007</option>
 								<option value="2006">2006</option>
 								<option value="2005">2005</option>
@@ -208,8 +208,8 @@
 							</select>
 						</p>
 					 <p class="row">
-						<label for="specialneeds">Special Needs:</label>
-						<input type="checkbox" id="specialneeds" name="specialneeds" class="button" />
+						<label for="specialNeeds">Special Needs:</label>
+						<input type="checkbox" id="specialNeeds" name="specialNeeds" class="button" />
 					</p>
 					 </div>
 				</fieldset>

@@ -63,7 +63,90 @@
 			return($this->salt);
 		}
 		
-// setters (or mutators)
+		/* static method to get user by email
+		 * input: (pointer) to mysql
+		 * input: (string) email to search by
+		 * output: (object) user */
+		public static function getUserByEmail(&$mysqli, $email)
+		{	// check for a good mySQL pointer
+			if(is_object($mysqli) === false || get_class($mysqli) !== "mysqli")
+			{
+				throw(new Exception("Non mySQL pointer detected."));
+			}
+			// create the query template
+			$query = "SELECT id, email, password, salt FROM user WHERE email = ?";
+			// prepare the query statement
+			$statement = $mysqli->prepare($query);
+			if($statement === false)
+			{
+				throw(new Exception("Unable to prepare statement."));
+			}
+			// bind parameters to the query template
+			$wasClean = $statement->bind_param("s", $email);
+			if($wasClean === false)
+			{
+				throw(new Exception("Unable to bind paramenters."));
+			}
+			// ok, let's rock!
+			if($statement->execute() === false)
+			{
+				throw(new Exception("Unable to execute the statement."));
+			}
+			// get the result and make a new object
+			$result = $statement->get_result();
+			if($result === false || $result->num_rows !== 1)
+			{
+				throw(new Exception("Unable to determine user: email not found."));
+			}
+			// get the row and set the id
+			$row = $result->fetch_assoc();
+			$user = new User($row["id"], $row["email"], $row["password"], $row["salt"]);
+			return($user);
+			$statement->close();
+		}
+		/* getter method for id using the sql database and the email
+		 * input: (mysqli class object) $mysqli
+		 * input: (string) email address unique to user
+		 * throws: when there is no user with that email address*/
+		public static function getUserById(&$mysqli, $id)
+		{	// check for a good mySQL pointer
+			if(is_object($mysqli) === false || get_class($mysqli) !== "mysqli")
+			{
+				throw(new Exception("Non mySQL pointer detected."));
+			}
+			// create the query template
+			$query = "SELECT id, email, password, salt FROM user WHERE id = ?";
+			// prepare the query statement
+			$statement = $mysqli->prepare($query);
+			if($statement === false)
+			{
+				throw(new Exception("Unable to prepare statement."));
+			}
+			// bind parameters to the query template
+			$wasClean = $statement->bind_param("i", $id);
+			if($wasClean === false)
+			{
+				throw(new Exception("Unable to bind paramenters."));
+			}
+			// ok, let's rock!
+			if($statement->execute() === false)
+			{
+				throw(new Exception("Unable to execute the statement."));
+			}
+			// get the result and make a new object
+			$result = $statement->get_result();
+			if($result === false || $result->num_rows !== 1)
+			{
+				throw(new Exception("Unable to determine user: id not found."));
+			}
+			// get the row and set the id
+			$row = $result->fetch_assoc();
+			$user = new User($row["id"], $row["email"], $row["password"], $row["salt"]);
+			return($user);
+			$statement->close();
+		}
+		
+// SETTERS (or mutators)
 		/* setter method for id
 		 * input: (int) new id
 		 * output: N/A */

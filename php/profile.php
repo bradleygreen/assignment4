@@ -82,6 +82,107 @@
 		{
 			return($this->specialNeeds);
 		}
+		/* static method to get user by email
+		 * input: (pointer) to mysql
+		 * input: (string) email to search by
+		 * output: (object) user */
+		public static function getProfileByUserId(&$mysqli, $userId)
+		{
+			// check for a good mySQL pointer
+			if(is_object($mysqli) === false || get_class($mysqli) !== "mysqli")
+			{
+				throw(new Exception("Non mySQL pointer detected."));
+			}
+			
+			// create the query template
+			$query = "SELECT id, userId, firstName, lastName, birthday, specialNeeds FROM profile WHERE userId = ?";
+			
+			// prepare the query statement
+			$statement = $mysqli->prepare($query);
+			if($statement === false)
+			{
+				throw(new Exception("Unable to prepare statement."));
+			}
+			
+			// bind parameters to the query template
+			$wasClean = $statement->bind_param("i", $userId);
+			if($wasClean === false)
+			{
+				throw(new Exception("Unable to bind paramenters."));
+			}
+			
+			// ok, let's rock!
+			if($statement->execute() === false)
+			{
+				throw(new Exception("Unable to execute the statement."));
+			}
+			
+			// get the result and make a new object
+			$result = $statement->get_result();
+			if($result === false || $result->num_rows !== 1)
+			{
+				throw(new Exception("Unable to determine user: id not found."));
+			}
+			
+			// get the row and set the id
+			$row = $result->fetch_assoc();
+			$profile = new Profile($row["id"], $row["userId"], $row["firstName"], $row["lastName"], $row["birthday"], $row["specialNeeds"]);
+			
+			$statement->close();
+			
+			return($profile);
+		}
+		
+		/* static method to get user by id
+		 * input: (pointer) to mysql
+		 * input: (string) id to search by
+		 * output: (object) user */
+		public static function getProfileById(&$mysqli, $id)
+		{
+			// check for a good mySQL pointer
+			if(is_object($mysqli) === false || get_class($mysqli) !== "mysqli")
+			{
+				throw(new Exception("Non mySQL pointer detected."));
+			}
+			
+			// create the query template
+			$query = "SELECT id, userId, firstName, lastName, birthday, specialNeeds FROM profile WHERE id = ?";
+			
+			// prepare the query statement
+			$statement = $mysqli->prepare($query);
+			if($statement === false)
+			{
+				throw(new Exception("Unable to prepare statement."));
+			}
+			
+			// bind parameters to the query template
+			$wasClean = $statement->bind_param("i", $id);
+			if($wasClean === false)
+			{
+				throw(new Exception("Unable to bind paramenters."));
+			}
+			
+			// ok, let's rock!
+			if($statement->execute() === false)
+			{
+				throw(new Exception("Unable to execute the statement."));
+			}
+			
+			// get the result and make a new object
+			$result = $statement->get_result();
+			if($result === false || $result->num_rows !== 1)
+			{
+				throw(new Exception("Unable to determine user: id not found."));
+			}
+			
+			// get the row and set the id
+			$row = $result->fetch_assoc();
+			$profile = new Profile($row["id"], $row["userId"], $row["firstName"], $row["lastName"], $row["birthday"], $row["specialNeeds"]);
+			
+			$statement->close();
+			
+			return($profile);
+		}
 		
 // SETTER METHODS
 		/* mutator method for id
@@ -176,7 +277,7 @@
 			// trim off leading and trailing spaces (sanitization1)
 			$newBirthday = trim($newBirthday);
 			// pass through a regular expression (sanitization2) this date regex was created by JoshG 04-15-14
-			$regexp = "/^(\d{4})[-\/\.](0?[1-9]|1[0-2])[-\/\.](0?[1-9]|[1-2]\d|3[01])$/";
+			$regexp = "/^(\d{4})[-\/\.](0?[1-9]|1[0-2])[-\/\.](0?[1-9]?|[1-2]\d|3[01])$/";
 			if(preg_match($regexp, $newBirthday) !==1)
 			{
 				throw(new Exception("Invalid birthday detected: $newBirthday"));

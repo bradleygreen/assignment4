@@ -7,14 +7,14 @@ function registration()
     mysqli_report(MYSQLI_REPORT_STRICT);
     try
     {
-        $mysqli = new mysqli("localhost", "airline_kirstene", "1CODingF\$\$L", "airline_kirstene");
+        $mysqli = new mysqli("localhost", "airline_bradg", "1CODingF\$\$L", "airline_bradg");
     }
     catch(mysqli_sql_exception $exception)
     {
         echo "Unable to connect to mySQL:" . $exception->getMessage();
     }
     $email = $_POST["email"];
-    $email = trim("email");
+    $email = trim($email);
     $password = $_POST["password"];
     $firstName = $_POST["firstName"];
     $firstName = trim($firstName);
@@ -29,6 +29,10 @@ function registration()
     {
         $specialNeeds = 0;
     }
+	else
+	{
+		$specialNeeds = 1;
+	}
     if($_POST["password"] !== $_POST["confirmPassword"])
     {
         echo"<p style='color: red'>Password do not match.</p>";
@@ -38,7 +42,7 @@ function registration()
     $salt = bin2hex($bytes);
     $passSalt = $password . $salt;
     $hash = hash("sha512", $passSalt, false);
-    $user = new User(-1, $email,$hash, $salt);
+    $user = new User(-1, $email, $hash, $salt);
     try
     {
         $user->insert($mysqli);
@@ -52,18 +56,10 @@ function registration()
     $profile = new Profile(-1, $id, $firstName, $lastName, $birthday, $specialNeeds);
     $profile->insert($mysqli);
     $_SESSION["id"] = $id;
-    $location = $_SERVER['HTTP_REFERER'];
-    if($location == "http://students.deepdivecoders.com/~ericd/assignment4/forms/loginForm.php" || "http://students.deepdivecoders.com/~kirstene/assignment4/forms/registrationform.php")
-    {
-            header("location: profileForm.php");
-    }
-    else
-    {
-            header("location: $location");
-    }
+	header("location: profileForm.php");
     $mysqli->close();
 }
-register();
+registration();
 ?>
     
     

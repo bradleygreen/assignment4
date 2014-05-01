@@ -1,10 +1,10 @@
      <?php
         //start sessions
         session_start();
-        //require the user class to optain user info
+        //require the user class to obtain user info
         require_once("user.php");
         function login()
-        {//Tells mysqli to throw exceptions; verifys a connection to mySQL
+        {	//Tells mysqli to throw exceptions; verifies a connection to mySQL
             mysqli_report(MYSQLI_REPORT_ERROR);
             try
             { //gives me access to mysqli on server
@@ -37,15 +37,7 @@
             {
                 $id = $user->getId();
                 $_SESSION["id"] = $id;
-                $location = $_SERVER['HTTP_REFERER'];
-                if($location == "http://studentsdeepdivecoders.com/~kirstene/assignment4/forms/loginForm.php")
-                {
-                        header ("location: profileForm.php");
-                }
-                else
-                {
-                        header("location: $location");
-                }
+				header("location: profileForm.php");
             }
             else
             {
